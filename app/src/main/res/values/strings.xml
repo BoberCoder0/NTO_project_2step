@@ -4,4 +4,6 @@
     <string name="auth_title">Привет! Введи код для авторизации</string>
     <string name="auth_label">Код</string>
     <string name="auth_sign_in">Войти</string>
+
+    <string name="main_welcome">Добро Пожаловать!</string>
 </resources>

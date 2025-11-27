@@ -73,6 +73,7 @@ private fun Content(
     viewModel: AuthViewModel,
     state: AuthState.Data
 ) {
+    var isEnabled by remember { mutableStateOf(false) }
     var inputText by remember { mutableStateOf("") }
     Spacer(modifier = Modifier.size(16.dp))
     TextField(
@@ -81,6 +82,10 @@ private fun Content(
         onValueChange = {
             inputText = it
             viewModel.onIntent(AuthIntent.TextInput(it))
+            val condition1 = it.isNotEmpty()
+            val condition2 = it.length == 4
+            val condition3 = it.all { ch -> ch.isLetterOrDigit() }
+            isEnabled = condition1 && condition2 && condition3
         },
         label = { Text(stringResource(R.string.auth_label)) }
     )
@@ -90,7 +95,7 @@ private fun Content(
         onClick = {
             viewModel.onIntent(AuthIntent.Send(inputText))
         },
-        enabled = true
+        enabled = isEnabled
     ) {
         Text(stringResource(R.string.auth_sign_in))
     }
