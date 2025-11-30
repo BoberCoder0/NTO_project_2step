@@ -15,7 +15,7 @@ import ru.myitschool.work.domain.auth.CheckAndSaveAuthCodeUseCase
 
 class AuthViewModel : ViewModel() {
     private val checkAndSaveAuthCodeUseCase by lazy { CheckAndSaveAuthCodeUseCase(AuthRepository) }
-    private val _uiState = MutableStateFlow<AuthState>(AuthState.Data)
+    private val _uiState = MutableStateFlow<AuthState>(AuthState.Data())
     val uiState: StateFlow<AuthState> = _uiState.asStateFlow()
 
     private val _actionFlow: MutableSharedFlow<Unit> = MutableSharedFlow()
@@ -26,18 +26,32 @@ class AuthViewModel : ViewModel() {
             is AuthIntent.Send -> {
                 viewModelScope.launch(Dispatchers.Default) {
                     _uiState.update { AuthState.Loading }
-                    checkAndSaveAuthCodeUseCase.invoke("9999").fold(
+                    val currentState = _uiState.value
+                    val code = if (currentState is AuthState.Data) currentState.code else ""
+                    checkAndSaveAuthCodeUseCase.invoke(code).fold(
                         onSuccess = {
                             _actionFlow.emit(Unit)
                         },
                         onFailure = { error ->
                             error.printStackTrace()
-                            _actionFlow.emit(Unit)
+                            _uiState.value = AuthState.Data(
+                                err = error.message ?: "Неизвестная ошибка"
+                            )
                         }
                     )
                 }
             }
-            is AuthIntent.TextInput -> Unit
+            is AuthIntent.TextInput -> {
+                if (_uiState.value is AuthState.Data) {
+                    _uiState.value = AuthState.Data(code = intent.text)
+                }
+            }
+            is AuthIntent.ResetError -> {
+                val currentState = _uiState.value
+                if (currentState is AuthState.Data && currentState.err.isNotEmpty())  {
+                    _uiState.value = AuthState.Data("")
+                }
+            }
         }
     }
 }
