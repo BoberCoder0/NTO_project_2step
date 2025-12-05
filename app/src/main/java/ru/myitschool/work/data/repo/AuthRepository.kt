@@ -4,7 +4,7 @@ import ru.myitschool.work.data.source.NetworkDataSource
 
 object AuthRepository {
 
-    private var codeCache: String? = null
+    var codeCache: String? = null
 
     suspend fun checkAndSave(text: String): Result<Boolean> {
         return NetworkDataSource.checkAuth(text).onSuccess { success ->

@@ -1,6 +1,7 @@
 package ru.myitschool.work.data.source
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
@@ -12,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import ru.myitschool.work.core.Constants
+import ru.myitschool.work.data.dto.UserInfoResponse
 
 object NetworkDataSource {
     private val client by lazy {
@@ -26,6 +28,7 @@ object NetworkDataSource {
                     }
                 )
             }
+            expectSuccess = false
         }
     }
 
@@ -39,20 +42,35 @@ object NetworkDataSource {
         }
     }
 
-    suspend fun getInfo(code: String): Result<Boolean> = withContext(Dispatchers.IO) { // я так понял инфу аккаунта (image,name, id?)
-        return@withContext runCatching {
-            val response = client.get(getUrl(code, Constants.AUTH_URL))
-            when (response.status) {
-                HttpStatusCode.OK -> true
-                else -> error(response.bodyAsText())
+    // Без runCatching т.к. надо различать ошибки
+    suspend fun getUserInfo(code: String): Result<UserInfoResponse> = withContext(Dispatchers.IO) {
+        try {
+            val response = client.get("${Constants.HOST}/api/$code/info") {
             }
+            when (response.status) {
+                HttpStatusCode.OK -> {
+                    val userInfo = response.body<UserInfoResponse>()
+                    Result.success(userInfo)
+                }
+                HttpStatusCode.BadRequest -> {
+                    Result.failure(Exception("что-то пошло не так"))
+                }
+                HttpStatusCode.Unauthorized -> {
+                    Result.failure(Exception("кода не существует"))
+                }
+                else -> {
+                    Result.failure(Exception("Неизвестная ошибка: ${response.status}"))
+                }
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     suspend fun getBooking(code: String): Result<Boolean> = withContext(Dispatchers.IO) {
         // типа передаем id как раз
         return@withContext runCatching {
-            val response = client.get(getUrl(code, Constants.AUTH_URL))
+            val response = client.get(getUrl(code, Constants.BOOKING_URL))
             when (response.status) {
                 HttpStatusCode.OK -> true
                 else -> error(response.bodyAsText())

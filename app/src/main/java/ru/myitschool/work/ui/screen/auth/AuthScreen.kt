@@ -90,7 +90,9 @@ private fun Content(
             if (state.err.isNotEmpty()) {viewModel.onIntent(AuthIntent.ResetError)}
             val condition1 = it.isNotEmpty()
             val condition2 = it.length == 4
-            // val condition3 = it.all { ch -> ch.isLetterOrDigit() } // <- принимает кирилицу хотя по условию незя (было до меня 😵‍💫)
+            // val condition3 = it.all { ch -> ch.isLetterOrDigit() }
+            // /\ принимает кирилицу хотя по условию незя (было до меня 😵‍💫)
+            // сорян
             val condition3 = it.matches(Regex("^[A-Za-z0-9]+$"))
             isEnabled = condition1 && condition2 && condition3
         },
